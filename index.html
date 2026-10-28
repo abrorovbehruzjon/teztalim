@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEZTALIM — Zamonaviy Ta'lim Platformasi</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#05070f',
+                            card: 'rgba(15, 23, 42, 0.75)',
+                            accent: '#6366f1',
+                            neon: '#00f2fe',
+                            purple: '#a855f7',
+                            gold: '#f59e0b',
+                            emerald: '#10b981'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #05070f;
+            color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism styles */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.2);
+        }
+
+        .glass-panel { background: rgba(15,23,42,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .glass-modal {
+            background: rgba(10, 13, 26, 0.94);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .neon-text-glow {
+            text-shadow: 0 0 12px rgba(0, 242, 254, 0.6), 0 0 24px rgba(99, 102, 241, 0.4);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05070f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Canvas for Live Particles Background -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Top Navigation Header -->
+    <header class="z-20 w-full glass-panel sticky top-0 border-b border-white/10 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="showSection('main-dashboard')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 flex items-center justify-center font-orbitron font-black text-2xl text-white shadow-lg shadow-indigo-500/30">
+                T
+            </div>
+            <span class="font-orbitron font-bold text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 neon-text-glow">
+                TEZTALIM
+            </span>
+        </div>
+
+        <div class="flex items-center space-x-3 flex-wrap">
+            <!-- Active Time Tracker Widget -->
+            <div id="time-tracker-badge" class="hidden sm:flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-700/80 text-xs text-slate-300">
+                <i class="fa-regular fa-clock text-cyan-400"></i>
+                <span>Platformada: <strong id="user-timer" class="text-white font-mono">00:00:00</strong></span>
+            </div>
+
+            <!-- Faol o'quvchilar Quick Link -->
+            <button onclick="showSection('faol-oquvchilar')" class="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold hover:bg-amber-500/20 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-trophy"></i> Faol O'quvchilar
+            </button>
+
+            <!-- Parent Portal Link -->
+            <button onclick="openParentModal()" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-user-shield"></i> Ota-ona Kuzatuvi
+            </button>
+
+            <!-- Admin Button -->
+            <button id="admin-header-btn" onclick="openAdminAuthModal()" class="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-semibold hover:bg-indigo-500/20 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-lock"></i> Admin
+            </button>
+
+            <!-- Auth Profile Container -->
+            <div id="auth-buttons">
+                <button onclick="openAuthModal('login')" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-lg shadow-indigo-600/30">
+                    Kirish / Ro'yxatdan o'tish
+                </button>
+            </div>
+
+            <div id="user-badge" class="hidden flex items-center space-x-3 bg-slate-800/90 border border-slate-700 px-3 py-1.5 rounded-xl">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-xs text-white" id="user-avatar">
+                    U
+                </div>
+                <div class="text-left">
+                    <p class="text-xs font-bold text-white leading-none" id="user-display-name">Foydalanuvchi</p>
+                    <p class="text-[10px] text-slate-400 leading-tight mt-0.5" id="user-role-badge">O'quvchi</p>
+                </div>
+                <button onclick="logoutUser()" class="text-slate-400 hover:text-red-400 text-xs ml-2" title="Chiqish">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container Layout -->
+    <main class="relative z-10 max-w-7xl mx-auto px-6 py-8 flex-1 w-full">
+
+        <!-- GLOBAL ANNOUNCEMENT BANNER -->
+        <div id="broadcast-alert" class="hidden mb-6 p-4 rounded-xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-slate-900/80 border border-indigo-500/40 flex items-center justify-between shadow-xl backdrop-blur-md">
+            <div class="flex items-center space-x-3">
+                <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400"><i class="fa-solid fa-bullhorn animate-pulse text-lg"></i></span>
+                <div>
+                    <h4 class="text-xs uppercase tracking-wider text-indigo-300 font-bold" id="broadcast-tag">YANGILIK</h4>
+                    <p class="text-sm font-medium text-white" id="broadcast-msg">Yangi e'lon mavjud!</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('broadcast-alert').classList.add('hidden')" class="text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- SECTION 1: DASHBOARD (CATEGORIES GRID) -->
+        <section id="sec-main-dashboard" class="space-y-8">
+            <div class="text-center space-y-3 max-w-2xl mx-auto">
+                <h1 class="font-orbitron font-extrabold text-3xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-indigo-300">
+                    KELAJAK TA'LIMI PLATFORMASI
+                </h1>
+                <p class="text-slate-400 text-sm">
+                    Fanlar, zamonaviy IT darsliklari, sun'iy intellekt maslahatxonasi va jonli darslar platformasiga xush kelibsiz!
+                </p>
+            </div>
+
+            <!-- 4-Burchakli Kvadrat Kartalar Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- 1. FANLAR -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-2xl">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">FANLAR</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Tarix, Ingliz-tili, Ona-tili, Matematika va Huquq fanlaridan chuqurlashtirilgan va interaktiv bilimlarni oling.
+                        </p>
+                    </div>
+                    <button onclick="showSection('fanlar')" class="w-full py-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 2. DARSLIKLAR (IT) -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-2xl">
+                            <i class="fa-solid fa-code"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">DARSLIKLAR</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Cyber Security, HTML, CSS, JavaScript va Python dasturlash yo'nalishlarida nazariy darslar.
+                        </p>
+                    </div>
+                    <button onclick="showSection('darsliklar-it')" class="w-full py-2.5 rounded-xl bg-cyan-600/80 hover:bg-cyan-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 3. FANGA YO'NALTIRISH (AI) -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-2xl">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">FANGA YO'NALTIRISH</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            AI Maslahatchi: O'zingiz yoqtirgan kasbni ayting va unga mos keladigan fanlarni bilib oling.
+                        </p>
+                    </div>
+                    <button onclick="showSection('fanga-yonaltirish')" class="w-full py-2.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 4. KELAJAK MARKAZI -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl">
+                            <i class="fa-solid fa-rocket"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">KELAJAK MARKAZI</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Markazimiz xabar va loyihalari, innovatsion tanlovlar hamda kelajak ko'nikmalari markazi.
+                        </p>
+                    </div>
+                    <button onclick="showSection('kelajak-markazi')" class="w-full py-2.5 rounded-xl bg-amber-600/80 hover:bg-amber-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 5. KASBGA YO'NALTIRISH (AI) -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">KASBGA YO'NALTIRISH</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            AI Maslahatchi: Qaysi fanlarni yaxshi ko'rishingizni ayting va sizga munosib kelajak kasbini aniqlang.
+                        </p>
+                    </div>
+                    <button onclick="showSection('kasbga-yonaltirish')" class="w-full py-2.5 rounded-xl bg-emerald-600/80 hover:bg-emerald-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 6. ONLINE DARSLAR -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 text-2xl">
+                            <i class="fa-solid fa-video"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">ONLINE DARSLAR</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            O'qituvchi va o'quvchilar o'rtasidagi real vaqtdagi Jonli suhbat dars xonasi va muloqot tizimi.
+                        </p>
+                    </div>
+                    <button onclick="showSection('online-darslar')" class="w-full py-2.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-red-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 7. YANGILIKLAR -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-2xl">
+                            <i class="fa-solid fa-newspaper"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">YANGILIKLAR</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Ta'lim sohasidagi eng so'nggi va muhim e'lonlar hamda yangiliklar bilan tanishing.
+                        </p>
+                    </div>
+                    <button onclick="showSection('yangiliklar')" class="w-full py-2.5 rounded-xl bg-blue-600/80 hover:bg-blue-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- 8. AMALIY DARSLAR -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 text-2xl">
+                            <i class="fa-solid fa-laptop-code"></i>
+                        </div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">AMALIY DARSLAR</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            IT sohasidagi real loyihalar ustida ishlash va praktikum topshiriqlari platformasi.
+                        </p>
+                    </div>
+                    <button onclick="showTezKundaModal('AMALIY DARSLAR')" class="w-full py-2.5 rounded-xl bg-pink-600/80 hover:bg-pink-600 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-pink-600/20 flex items-center justify-center gap-2">
+                        <span>Kirish</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2: FANLAR BO'LIMI -->
+        <section id="sec-fanlar" class="hidden space-y-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-white">FANLAR BO'LIMI</h2>
+                    <p class="text-slate-400 text-xs mt-1">Fanni tanlang: darslik o'qing yoki test yeching.</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- TARIX -->
+                <div class="glass-card p-6 rounded-2xl border border-indigo-500/20 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-amber-500/10 text-amber-400 text-xl"><i class="fa-solid fa-landmark"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">TARIX</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">O'zbekiston va Dunyo tarixi, eng muhim voqealar va sana ma'lumotlari.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="selectSubject('TARIX', 'darslik')" class="flex-1 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition">Darsliklar</button>
+                        <button onclick="selectSubject('TARIX', 'test')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">Test Yechish</button>
+                    </div>
+                </div>
+
+                <!-- INGLIZ TILI -->
+                <div class="glass-card p-6 rounded-2xl border border-indigo-500/20 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-blue-500/10 text-blue-400 text-xl"><i class="fa-solid fa-language"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">INGLIZ-TILI</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Grammar, Vocabulary va IELTS darajasidagi chuqurlashtirilgan darslar.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="selectSubject('INGLIZ-TILI', 'darslik')" class="flex-1 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition">Darsliklar</button>
+                        <button onclick="selectSubject('INGLIZ-TILI', 'test')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">Test Yechish</button>
+                    </div>
+                </div>
+
+                <!-- ONA TILI -->
+                <div class="glass-card p-6 rounded-2xl border border-indigo-500/20 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 text-xl"><i class="fa-solid fa-pen-nib"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">ONA-TILI</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">O'zbek tili grammatikasi, punktuatsiya va adabiyot darsliklari.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="selectSubject('ONA-TILI', 'darslik')" class="flex-1 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition">Darsliklar</button>
+                        <button onclick="selectSubject('ONA-TILI', 'test')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">Test Yechish</button>
+                    </div>
+                </div>
+
+                <!-- MATEMATIKA -->
+                <div class="glass-card p-6 rounded-2xl border border-indigo-500/20 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-purple-500/10 text-purple-400 text-xl"><i class="fa-solid fa-calculator"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">MATEMATIKA</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Algebra, Geometriya va Mantiqiy masalalar yechimlari.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="selectSubject('MATEMATIKA', 'darslik')" class="flex-1 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition">Darsliklar</button>
+                        <button onclick="selectSubject('MATEMATIKA', 'test')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">Test Yechish</button>
+                    </div>
+                </div>
+
+                <!-- HUQUQ -->
+                <div class="glass-card p-6 rounded-2xl border border-indigo-500/20 space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-red-500/10 text-red-400 text-xl"><i class="fa-solid fa-scale-balanced"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">HUQUQ</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Konstitutsiya, Inson huquqlari va huquqshunoslik asoslari.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="selectSubject('HUQUQ', 'darslik')" class="flex-1 py-2 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold transition">Darsliklar</button>
+                        <button onclick="selectSubject('HUQUQ', 'test')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">Test Yechish</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Content Viewer Container -->
+            <div id="subject-content-box" class="hidden glass-card p-6 rounded-2xl space-y-6">
+                <!-- Dynamically filled -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: DARSLIKLAR (IT BO'LIMI) -->
+        <section id="sec-darsliklar-it" class="hidden space-y-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-white">IT DARSLIKLAR BO'LIMI</h2>
+                    <p class="text-slate-400 text-xs mt-1">Zamonaviy dasturlash va kiberxavfsizlik kurslari</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- CYBER -->
+                <div class="glass-card p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-red-500/10 text-red-400 text-xl"><i class="fa-solid fa-user-ninja"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">CYBER SECURITY</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Kiberxavfsizlik va axborotni muhofaza qilish asoslari.</p>
+                    <button onclick="showTezKundaModal('CYBER SECURITY')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition">Boshlash</button>
+                </div>
+
+                <!-- HTML -->
+                <div class="glass-card p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-orange-500/10 text-orange-400 text-xl"><i class="fa-brands fa-html5"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">HTML5</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Veb-sahifalarning tuzilishini va karkasini yaratish.</p>
+                    <button onclick="showTezKundaModal('HTML5')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition">Boshlash</button>
+                </div>
+
+                <!-- CSS -->
+                <div class="glass-card p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-blue-500/10 text-blue-400 text-xl"><i class="fa-brands fa-css3-alt"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">CSS3</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Veb-saytlarga zamonaviy uslub va dizayn berish.</p>
+                    <button onclick="showTezKundaModal('CSS3')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition">Boshlash</button>
+                </div>
+
+                <!-- JAVASCRIPT -->
+                <div class="glass-card p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-yellow-500/10 text-yellow-400 text-xl"><i class="fa-brands fa-js"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">JAVASCRIPT</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Interaktiv va animatsion veb-dasturlar yaratish.</p>
+                    <button onclick="showTezKundaModal('JAVASCRIPT')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition">Boshlash</button>
+                </div>
+
+                <!-- PYTHON -->
+                <div class="glass-card p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 text-xl"><i class="fa-brands fa-python"></i></span>
+                        <h4 class="font-orbitron font-bold text-lg text-white">PYTHON</h4>
+                    </div>
+                    <p class="text-xs text-slate-400">Sun'iy intellekt, Backend va Ma'lumotlar tahlili.</p>
+                    <button onclick="showTezKundaModal('PYTHON')" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600 hover:text-white text-slate-300 text-xs font-semibold transition">Boshlash</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: FANGA YO'NALTIRISH (AI) -->
+        <section id="sec-fanga-yonaltirish" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-purple-400">FANGA YO'NALTIRISH (AI)</h2>
+                    <p class="text-slate-400 text-xs mt-1">Yoqtirgan kasbingizni kiriting → AI maslahatchi unga mos fanlarni aytib beradi.</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <div id="ai-chat-1" class="h-64 overflow-y-auto space-y-3 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                    <div class="p-3 rounded-xl bg-purple-900/30 border border-purple-500/30 text-xs text-purple-200">
+                        🤖 <strong>AI Maslahatchi:</strong> Salom! Kelajakda qaysi kasb egalari bo'lmoqchisiz? Kasbingizni yozing, men unga mos fanlarni yo'naltiraman.
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input id="ai-input-1" type="text" placeholder="Masalan: Shifokor, Dasturchi, Huquqshunos..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500">
+                    <button onclick="processAIAdvisor(1)" class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition">
+                        Yuborish
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: KASBGA YO'NALTIRISH (AI) -->
+        <section id="sec-kasbga-yonaltirish" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-emerald-400">KASBGA YO'NALTIRISH (AI)</h2>
+                    <p class="text-slate-400 text-xs mt-1">Yoqtirgan fanlaringizni kiriting → AI maslahatchi mos kasblarni aytadi.</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl space-y-4">
+                <div id="ai-chat-2" class="h-64 overflow-y-auto space-y-3 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                    <div class="p-3 rounded-xl bg-emerald-900/30 border border-emerald-500/30 text-xs text-emerald-200">
+                        🤖 <strong>AI Maslahatchi:</strong> Salom! Qaysi fanlarni chuqur o'rganishni yaxshi ko'rasiz? Fanlaringizni yozing, men mos kelajak kasblarini tavsiya qilaman.
+                    </div>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input id="ai-input-2" type="text" placeholder="Masalan: Matematika va Fizika, Ingliz tili va Tarix..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <button onclick="processAIAdvisor(2)" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition">
+                        Yuborish
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: ONLINE DARSLAR (REAL-TIME CLASSROOM SIMULATION) -->
+        <section id="sec-online-darslar" class="hidden space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-red-400">JONLI ONLINE DARS XONASI</h2>
+                    <p class="text-slate-400 text-xs mt-1">O'qituvchi va o'quvchilar o'rtasidagi real vaqtdagi jonli muloqot va dars interfeysi</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Video Stream Canvas Simulation -->
+                <div class="lg:col-span-2 glass-card rounded-2xl p-4 flex flex-col justify-between space-y-4">
+                    <div class="relative w-full h-80 bg-slate-950 rounded-xl overflow-hidden flex flex-col items-center justify-center border border-slate-800">
+                        <div class="absolute top-4 left-4 flex items-center space-x-2 bg-red-600/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full animate-pulse">
+                            <span class="w-2 h-2 rounded-full bg-white"></span>
+                            <span>JONLI EFIR</span>
+                        </div>
+                        
+                        <div class="text-center space-y-3">
+                            <div class="w-20 h-20 mx-auto rounded-full bg-indigo-600/30 border border-indigo-500 flex items-center justify-center text-3xl text-indigo-400">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                            </div>
+                            <h4 class="font-bold text-white text-base">Abrorov Behruzjon (O'qituvchi)</h4>
+                            <p class="text-xs text-slate-400">Mavzu: Zamonaviy Ta'limda AI Texnologiyalari va Metodikasi</p>
+                        </div>
+
+                        <!-- Audio Waveform Visualizer simulation -->
+                        <div class="absolute bottom-4 left-4 right-4 flex items-center justify-center space-x-1 h-6">
+                            <span class="w-1 bg-cyan-400 h-3 animate-bounce"></span>
+                            <span class="w-1 bg-cyan-400 h-6 animate-bounce"></span>
+                            <span class="w-1 bg-cyan-400 h-4 animate-bounce"></span>
+                            <span class="w-1 bg-cyan-400 h-2 animate-bounce"></span>
+                            <span class="w-1 bg-cyan-400 h-5 animate-bounce"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                        <div class="flex space-x-2">
+                            <button class="p-2.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs"><i class="fa-solid fa-microphone-slash"></i></button>
+                            <button class="p-2.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs"><i class="fa-solid fa-video"></i></button>
+                            <button class="p-2.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs"><i class="fa-solid fa-hand"></i> Qo'l ko'tarish</button>
+                        </div>
+                        <span class="text-xs text-slate-400"><i class="fa-solid fa-users text-indigo-400 mr-1"></i> 24 nafar o'quvchi onlayn</span>
+                    </div>
+                </div>
+
+                <!-- Chat Box -->
+                <div class="glass-card rounded-2xl p-4 flex flex-col justify-between h-[420px]">
+                    <h4 class="font-bold text-sm text-white pb-2 border-b border-slate-800">Dars Chati</h4>
+                    <div id="online-chat-box" class="flex-1 overflow-y-auto space-y-2 py-3 text-xs">
+                        <div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                            <span class="font-bold text-indigo-400">O'qituvchi:</span>
+                            <p class="text-slate-300 mt-0.5">Assalomu alaykum o'quvchilar! Darsimiz boshlandi, savollaringiz bo'lsa chatda qoldiring.</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 pt-2 border-t border-slate-800">
+                        <input id="online-chat-input" type="text" placeholder="Xabar yozing..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+                        <button onclick="sendOnlineChatMessage()" class="px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: KELAJAK MARKAZI & YANGILIKLAR -->
+        <section id="sec-yangiliklar" class="hidden space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-blue-400" id="news-section-title">YANGILIKLAR BO'LIMI</h2>
+                    <p class="text-slate-400 text-xs mt-1">Platformamizdagi barcha rasmiy e'lonlar va loyihalar</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dynamically loaded news -->
+            </div>
+        </section>
+
+        <!-- SECTION 8: FAOL O'QUVCHILAR LEADERBOARD -->
+        <section id="sec-faol-oquvchilar" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="font-orbitron font-bold text-2xl text-amber-400"><i class="fa-solid fa-trophy mr-2"></i>FAOL O'QUVCHILAR REYTINGI</h2>
+                    <p class="text-slate-400 text-xs mt-1">Eng ko'p vaqt o'tkazgan va testlarni a'lo topshirgan o'quvchilar ro'yxati</p>
+                </div>
+                <button onclick="showSection('main-dashboard')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold">
+                    <i class="fa-solid fa-chevron-left mr-1.5"></i> Ortga
+                </button>
+            </div>
+
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/90 text-slate-400 font-orbitron uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-4">O'rin</th>
+                            <th class="p-4">O'quvchi</th>
+                            <th class="p-4">Gmail</th>
+                            <th class="p-4">Vaqt</th>
+                            <th class="p-4">Test ballari</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-tbody" class="divide-y divide-slate-800">
+                        <!-- Dynamic Leaderboard -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-slate-800/80 glass-panel py-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 <strong>TEZTALIM</strong> Platformasi. Barcha huquqlar himoyalangan.</p>
+    </footer>
+
+    <!-- MODAL 1: TEZ KUNDA NOTIFICATION MODAL -->
+    <div id="modal-tez-kunda" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-sm w-full rounded-2xl p-6 text-center space-y-4 border border-indigo-500/30">
+            <div class="w-16 h-16 mx-auto rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-3xl animate-bounce">
+                <i class="fa-solid fa-rocket"></i>
+            </div>
+            <h3 id="tez-kunda-title" class="font-orbitron font-bold text-xl text-white">TEZ KUNDA!</h3>
+            <p class="text-slate-300 text-xs leading-relaxed" id="tez-kunda-text">
+                Ushbu bo'lim tez kunda ishga tushiriladi!
+            </p>
+            <button onclick="closeModal('modal-tez-kunda')" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+                Tushundim
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL 2: USER AUTH (LOGIN / REGISTER) -->
+    <div id="modal-auth" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-md w-full rounded-2xl p-6 space-y-6 border border-slate-800 relative">
+            <button onclick="closeModal('modal-auth')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex border-b border-slate-800 pb-2 space-x-4">
+                <button id="tab-login-btn" onclick="switchAuthTab('login')" class="font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 pb-1">Kirish</button>
+                <button id="tab-register-btn" onclick="switchAuthTab('register')" class="font-bold text-sm text-slate-400 hover:text-white pb-1">Ro'yxatdan o'tish</button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Gmail Manzil</label>
+                    <input type="email" id="login-email" required placeholder="example@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Parol</label>
+                    <input type="password" id="login-pass" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+                    Tizimga Kirish
+                </button>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="form-register" onsubmit="handleRegister(event)" class="hidden space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Ism va Familiya</label>
+                    <input type="text" id="reg-fullname" required placeholder="Ali Valiyev" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Haqiqiy Gmail Manzilingiz</label>
+                    <input type="email" id="reg-email" required placeholder="ali@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Parol Yaratish</label>
+                    <input type="password" id="reg-pass" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+                    Ro'yxatdan O'tish
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: OTA-ONA KUZATUVI & REGISTRATION MODAL -->
+    <div id="modal-parent" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-md w-full rounded-2xl p-6 space-y-6 border border-emerald-500/30 relative">
+            <button onclick="closeModal('modal-parent')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="font-orbitron font-bold text-lg text-white">Ota-ona Kuzatuvi</h3>
+                <p class="text-xs text-slate-400">Farzandingizning bilimi va platformadagi vaqtini nazorat qiling</p>
+            </div>
+
+            <div class="flex border-b border-slate-800 pb-2 space-x-4">
+                <button id="tab-parent-login-btn" onclick="switchParentTab('login')" class="font-bold text-xs text-emerald-400 border-b-2 border-emerald-500 pb-1">Kirish</button>
+                <button id="tab-parent-reg-btn" onclick="switchParentTab('reg')" class="font-bold text-xs text-slate-400 hover:text-white pb-1">Ro'yxatdan O'tish</button>
+            </div>
+
+            <!-- Parent Login -->
+            <form id="form-parent-login" onsubmit="handleParentLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Farzandingizning Gmail manzili</label>
+                    <input type="email" id="parent-login-child-email" required placeholder="child@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition">
+                    Kuzatish Paneliga Kirish
+                </button>
+            </form>
+
+            <!-- Parent Register -->
+            <form id="form-parent-reg" onsubmit="handleParentRegister(event)" class="hidden space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Ota-onaning Ism va Familiyasi</label>
+                    <input type="text" id="parent-fullname" required placeholder="Ota / Ona ismi" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Farzandingizning (O'g'lingizning) Gmail manzili</label>
+                    <input type="email" id="parent-child-email" required placeholder="oglimiz@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <p class="text-[10px] text-slate-400 mt-1">Farzandingiz aynan shu Gmail bilan platformada ro'yxatdan o'tgan bo'lishi shart.</p>
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition">
+                    Arizani Yuborish (Admin Tasdig'iga)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: OTA-ONA DASHBOARD DISPLAY -->
+    <div id="modal-parent-dashboard" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-lg w-full rounded-2xl p-6 space-y-6 border border-emerald-500/40 relative">
+            <button onclick="closeModal('modal-parent-dashboard')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="border-b border-slate-800 pb-3">
+                <h3 class="font-orbitron font-bold text-lg text-emerald-400">Farzandingiz Natijalari Dashboardi</h3>
+                <p class="text-xs text-slate-400" id="parent-dash-student-name">O'quvchi: -</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400">Platformada sarflangan vaqt</p>
+                    <p class="text-xl font-bold text-white font-mono" id="parent-dash-time">00:00:00</p>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-1">
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400">Umumiy test bali</p>
+                    <p class="text-xl font-bold text-emerald-400 font-mono" id="parent-dash-score">0 ball</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2">
+                <h4 class="text-xs font-bold text-white">So'nggi O'zlashtirish Ma'lumoti:</h4>
+                <p class="text-xs text-slate-300" id="parent-dash-status">
+                    Farzandingiz muvaffaqiyatli darslarda qatnashmoqda.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: ADMIN AUTH MODAL -->
+    <div id="modal-admin-auth" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-sm w-full rounded-2xl p-6 space-y-6 border border-indigo-500/30 relative">
+            <button onclick="closeModal('modal-admin-auth')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 mx-auto rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="font-orbitron font-bold text-lg text-white">ADMIN KIRISH</h3>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Admin Login</label>
+                    <input type="text" id="admin-login-input" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Admin Parol</label>
+                    <input type="password" id="admin-pass-input" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition">
+                    Admin Panelga Kirish
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 6: FULL ADMIN DASHBOARD PANEL -->
+    <div id="modal-admin-dashboard" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-modal max-w-4xl w-full rounded-2xl p-6 space-y-6 border border-indigo-500/40 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal('modal-admin-dashboard')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="border-b border-slate-800 pb-4 flex items-center justify-between">
+                <div>
+                    <h3 class="font-orbitron font-bold text-xl text-indigo-400">TEZTALIM ADMIN PANELI</h3>
+                    <p class="text-xs text-slate-400">Xush kelibsiz, Abrorov Behruzjon!</p>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-mono font-bold">SUPERADMIN</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Action 1: Online Dars Boshlash -->
+                <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <h4 class="font-bold text-sm text-white flex items-center gap-2"><i class="fa-solid fa-broadcast-tower text-red-400"></i> Online Dars Boshlash</h4>
+                    <p class="text-xs text-slate-400">Barcha o'quvchilar ekraniga "Online dars 5 minutdan keyin boshlanadi" xabari yuboriladi.</p>
+                    <button onclick="triggerOnlineLessonBroadcast()" class="w-full py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-xs transition">
+                        Jonli Darsni E'lon Qilish
+                    </button>
+                </div>
+
+                <!-- Action 2: Yangiliklar va Kelajak Markaziga post tarqatish -->
+                <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-3">
+                    <h4 class="font-bold text-sm text-white flex items-center gap-2"><i class="fa-solid fa-paper-plane text-blue-400"></i> Yangilik Tarqatish</h4>
+                    <select id="admin-news-category" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                        <option value="YANGILIKLAR">YANGILIKLAR BO'LIMI</option>
+                        <option value="KELAJAK MARKAZI">KELAJAK MARKAZI</option>
+                    </select>
+                    <textarea id="admin-news-text" rows="2" placeholder="E'lon matnini kiriting..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none"></textarea>
+                    <button onclick="publishNewsFromAdmin()" class="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition">
+                        Tarqatish
+                    </button>
+                </div>
+            </div>
+
+            <!-- Management Section 1: Ro'yxatdan o'tgan o'quvchilar -->
+            <div class="space-y-3">
+                <h4 class="font-bold text-sm text-white">👥 Ro'yxatdan o'tgan O'quvchilar Ro'yxati</h4>
+                <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">Ism Familiya</th>
+                                <th class="p-3">Gmail</th>
+                                <th class="p-3">Vaqti</th>
+                                <th class="p-3">Amal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-students-tbody" class="divide-y divide-slate-800">
+                            <!-- Dynamic students list -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Management Section 2: Ota-onalar arizalari (Approval List) -->
+            <div class="space-y-3">
+                <h4 class="font-bold text-sm text-white">👨‍👩‍👧‍👦 Ota-onalar Arizalari va Tasdiqlash</h4>
+                <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px]">
+                            <tr>
+                                <th class="p-3">Ota-ona Ismi</th>
+                                <th class="p-3">Farzandi Gmail</th>
+                                <th class="p-3">Holat</th>
+                                <th class="p-3">Boshqaruv</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-parents-tbody" class="divide-y divide-slate-800">
+                            <!-- Dynamic parent requests -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL 7: ONLINE CLASS NOTIFICATION BROADCAST MODAL FOR STUDENTS -->
+    <div id="modal-online-lesson-alert" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+        <div class="glass-modal max-w-md w-full rounded-2xl p-6 text-center space-y-5 border border-red-500/50">
+            <div class="w-16 h-16 mx-auto rounded-full bg-red-500/20 text-red-500 flex items-center justify-center text-3xl animate-ping">
+                <i class="fa-solid fa-video"></i>
+            </div>
+            <h3 class="font-orbitron font-bold text-xl text-white">JONLI DARS SIZNI KUTMOQDA!</h3>
+            <p class="text-sm font-semibold text-red-400">
+                Online dars 5 minutdan keyin boshlanadi!
+            </p>
+            <p class="text-xs text-slate-400">
+                O'qituvchi Behruzjon Abrorov xonani ochdi. Tayyor bo'lib turing!
+            </p>
+            <button onclick="goToOnlineClassroomFromBroadcast()" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider transition">
+                Dars xonasiga o'tish
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        /* ===== 1. YORDAMCHI FUNKSIYALAR ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => s.toLowerCase().replace(/[’‘`ʻʼ']/g, '').replace(/[-\s]+/g, ' ');
+const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } };
+function sha256(s){const K=[],H=[];let p=0;const isP=n=>{for(let i=2;i*i<=n;i++)if(n%i==0)return 0;return 1};
+for(let c=2;p<64;c++)if(isP(c)){K[p]=(Math.cbrt(c)%1*4294967296)|0;if(p<8)H[p]=(Math.sqrt(c)%1*4294967296)|0;p++}
+const b=unescape(encodeURIComponent(s)),l=b.length*8,w=new Array((((l+64)>>9)<<4)+16).fill(0);
+for(let i=0;i<b.length;i++)w[i>>2]|=b.charCodeAt(i)<<(24-(i%4)*8);
+w[l>>5]|=0x80<<(24-l%32);w[w.length-1]=l;const R=(x,n)=>(x>>>n)|(x<<(32-n));
+for(let j=0;j<w.length;j+=16){const x=w.slice(j,j+16);let [a,q,c,d,e,f,g,h]=H;
+for(let i=0;i<64;i++){if(i>=16){const s0=R(x[i-15],7)^R(x[i-15],18)^(x[i-15]>>>3),s1=R(x[i-2],17)^R(x[i-2],19)^(x[i-2]>>>10);x[i]=(x[i-16]+s0+x[i-7]+s1)|0}
+const t1=(h+(R(e,6)^R(e,11)^R(e,25))+((e&f)^(~e&g))+K[i]+x[i])|0,t2=((R(a,2)^R(a,13)^R(a,22))+((a&q)^(a&c)^(q&c)))|0;
+h=g;g=f;f=e;e=(d+t1)|0;d=c;c=q;q=a;a=(t1+t2)|0}
+[a,q,c,d,e,f,g,h].forEach((v,i)=>H[i]=(H[i]+v)|0)}
+return H.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('')}
+const hashPw = (email, pw) => sha256(email + ':' + pw);
+const ADMIN_HASH = 'd3485de287441b25e6277f00835d4c8bcfe5b23e52e616cc5a12e55ebf637dd1';
+const isGmail = e => /^[a-z0-9._%+-]+@gmail\.com$/i.test(e);
+
+function toast(msg, ok = true) {
+    const t = document.createElement('div');
+    t.className = 'fixed bottom-6 right-6 z-[100] max-w-xs px-4 py-3 rounded-xl text-xs font-semibold text-white shadow-2xl ' + (ok ? 'bg-emerald-600' : 'bg-red-600');
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+/* ===== 2. MA'LUMOTLAR (localStorage, xavfsiz yuklash) ===== */
+const DEMO = 'demo123';
+let studentsData = load('TEZTALIM_STUDENTS', null) || [
+    { id: 1, fullname: "Anvar Karimov", email: "anvar@gmail.com", pass: hashPw("anvar@gmail.com", DEMO), time: 4200, score: 95 },
+    { id: 2, fullname: "Malika Zokirova", email: "malika@gmail.com", pass: hashPw("malika@gmail.com", DEMO), time: 3800, score: 88 },
+    { id: 3, fullname: "Sardor Toshpulatov", email: "sardor@gmail.com", pass: hashPw("sardor@gmail.com", DEMO), time: 2900, score: 80 }
+];
+let parentRequests = load('TEZTALIM_PARENTS', null) || [
+    { id: 1, parentName: "Ahmad Karimov", childEmail: "anvar@gmail.com", pass: hashPw("anvar@gmail.com", DEMO), status: "approved" },
+    { id: 2, parentName: "Dilfuza Zokirova", childEmail: "malika@gmail.com", pass: hashPw("malika@gmail.com", DEMO), status: "pending" }
+];
+let newsItems = load('TEZTALIM_NEWS', null) || [
+    { id: 1, cat: "YANGILIKLAR", title: "Yangi AI Maslahatchi ishga tushirildi!", date: "2026-10-25", content: "Platformamizda endi sun'iy intellekt orqali fanga va kasbga yo'naltirish imkoniyati mavjud." },
+    { id: 2, cat: "KELAJAK MARKAZI", title: "Kelajak Dasturchilari Tanlovi", date: "2026-10-24", content: "Kelajak markazimizda respublika o'quvchilari o'rtasida IT xakaton boshlanadi." }
+];
+let currentUser = null, activeTimerSeconds = 0, timerInterval = null, adminFails = 0, adminLockUntil = 0;
+
+function saveData() {
+    try {
+        localStorage.setItem('TEZTALIM_STUDENTS', JSON.stringify(studentsData));
+        localStorage.setItem('TEZTALIM_PARENTS', JSON.stringify(parentRequests));
+        localStorage.setItem('TEZTALIM_NEWS', JSON.stringify(newsItems));
+    } catch (e) { console.warn('Saqlab bo\'lmadi', e); }
+}
+function refreshFromStorage() {
+    studentsData = load('TEZTALIM_STUDENTS', studentsData);
+    parentRequests = load('TEZTALIM_PARENTS', parentRequests);
+    newsItems = load('TEZTALIM_NEWS', newsItems);
+    if (currentUser) currentUser = studentsData.find(s => s.id === currentUser.id) || currentUser;
+}
+
+/* ===== 3. NAVIGATSIYA VA MODALLAR ===== */
+function showSection(id) {
+    ['main-dashboard','fanlar','darsliklar-it','fanga-yonaltirish','kasbga-yonaltirish','online-darslar','yangiliklar','faol-oquvchilar']
+        .forEach(s => $('sec-' + s).classList.add('hidden'));
+    const real = id === 'kelajak-markazi' ? 'yangiliklar' : id;   // XATO TUZATILDI: kelajak-markazi bo'limi mavjud emas edi
+    $('sec-' + real).classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (real === 'yangiliklar') renderNewsSection(id === 'kelajak-markazi' ? 'KELAJAK MARKAZI' : 'YANGILIKLAR');
+    if (real === 'faol-oquvchilar') renderLeaderboard();
+}
+const LESSONS = {
+    'CYBER SECURITY': ["Kiberxavfsizlik asoslari", "Kuchli parol: kamida 12 belgi, harf+raqam+belgi aralash. Har sayt uchun alohida parol va ikki bosqichli autentifikatsiya (2FA) ishlating. Notanish havolalar (phishing) va fayllarni ochmang."],
+    'HTML5': ["HTML5 asoslari", "<pre class='text-left bg-slate-950 p-3 rounded-lg text-[11px] text-cyan-300 overflow-x-auto'>&lt;h1&gt;Salom!&lt;/h1&gt;\n&lt;p&gt;Birinchi sahifam&lt;/p&gt;\n&lt;a href=\"#\"&gt;Havola&lt;/a&gt;</pre>HTML sahifa tuzilishini (sarlavha, matn, rasm, havola) belgilaydi."],
+    'CSS3': ["CSS3 asoslari", "<pre class='text-left bg-slate-950 p-3 rounded-lg text-[11px] text-cyan-300 overflow-x-auto'>h1 {\n  color: royalblue;\n  font-size: 32px;\n}</pre>CSS elementlarning rangi, o'lchami va joylashuvini boshqaradi."],
+    'JAVASCRIPT': ["JavaScript asoslari", "<pre class='text-left bg-slate-950 p-3 rounded-lg text-[11px] text-cyan-300 overflow-x-auto'>let ism = \"Ali\";\nfunction salom() {\n  alert(\"Salom, \" + ism);\n}</pre>JavaScript sahifani interaktiv qiladi."],
+    'PYTHON': ["Python asoslari", "<pre class='text-left bg-slate-950 p-3 rounded-lg text-[11px] text-cyan-300 overflow-x-auto'>for i in range(1, 4):\n    print(\"Salom\", i)</pre>Python — AI, backend va ma'lumotlar tahlili uchun mashhur til."],
+    'AMALIY DARSLAR': ["Amaliy topshiriqlar", "1) HTML'da o'zingiz haqingizda sahifa yarating. 2) CSS bilan unga rang va shrift bering. 3) JavaScript bilan tugma bosilganda matn o'zgartiring."]
+};
+function showTezKundaModal(title) {
+    const L = LESSONS[title] || [title, "Bu bo'lim tez kunda ishga tushiriladi!"];
+    $('tez-kunda-title').innerText = L[0];
+    $('tez-kunda-text').innerHTML = L[1];
+    $('modal-tez-kunda').classList.remove('hidden');
+}
+function closeModal(id) { $(id).classList.add('hidden'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('[id^="modal-"]:not(.hidden)').forEach(m => m.classList.add('hidden')); });
+document.querySelectorAll('[id^="modal-"]').forEach(m => m.addEventListener('mousedown', e => { if (e.target === m) m.classList.add('hidden'); }));
+
+/* ===== 4. AUTENTIFIKATSIYA VA TAYMER ===== */
+function openAuthModal(tab) { switchAuthTab(tab); $('modal-auth').classList.remove('hidden'); }
+function switchAuthTab(tab) {
+    const lg = tab === 'login', on = "font-bold text-sm text-indigo-400 border-b-2 border-indigo-500 pb-1", off = "font-bold text-sm text-slate-400 hover:text-white pb-1";
+    $('form-login').classList.toggle('hidden', !lg); $('form-register').classList.toggle('hidden', lg);
+    $('tab-login-btn').className = lg ? on : off; $('tab-register-btn').className = lg ? off : on;
+}
+function handleRegister(e) {
+    e.preventDefault();
+    const fullname = $('reg-fullname').value.trim().replace(/\s+/g, ' '), email = $('reg-email').value.trim().toLowerCase(), pass = $('reg-pass').value;
+    if (fullname.length < 3) return toast("Ism va familiyani to'liq kiriting!", false);
+    if (!isGmail(email)) return toast("Faqat @gmail.com manzilidan foydalaning!", false);
+    if (pass.length < 6) return toast("Parol kamida 6 ta belgidan iborat bo'lsin!", false);
+    if (studentsData.some(s => s.email === email)) return toast("Bu Gmail allaqachon ro'yxatdan o'tgan!", false);
+    const u = { id: Date.now(), fullname, email, pass: hashPw(email, pass), time: 0, score: 0 };
+    studentsData.push(u); saveData();
+    e.target.reset(); closeModal('modal-auth'); loginSuccess(u);
+    toast("Muvaffaqiyatli ro'yxatdan o'tdingiz!");
+}
+function handleLogin(e) {
+    e.preventDefault();
+    const email = $('login-email').value.trim().toLowerCase(), pass = $('login-pass').value;
+    const u = studentsData.find(s => s.email === email);
+    if (!u || u.pass !== hashPw(email, pass)) return toast("Gmail yoki parol xato!", false);   // XATO TUZATILDI: parol tekshirilmas edi
+    e.target.reset(); closeModal('modal-auth'); loginSuccess(u);
+}
+function loginSuccess(u) {
+    currentUser = u;
+    try { localStorage.setItem('TEZTALIM_SESSION', u.id); } catch (e) {}
+    $('auth-buttons').classList.add('hidden'); $('user-badge').classList.remove('hidden'); $('time-tracker-badge').classList.remove('hidden');
+    $('user-display-name').innerText = u.fullname; $('user-avatar').innerText = u.fullname.charAt(0).toUpperCase();
+    activeTimerSeconds = u.time || 0; $('user-timer').innerText = formatSeconds(activeTimerSeconds);
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (document.hidden || !currentUser) return;   // faqat sahifa ochiq bo'lganda sanaydi
+        currentUser.time = ++activeTimerSeconds;
+        $('user-timer').innerText = formatSeconds(activeTimerSeconds);
+        if (activeTimerSeconds % 10 === 0) saveData();
+    }, 1000);
+}
+function logoutUser() {
+    saveData(); currentUser = null; clearInterval(timerInterval);
+    try { localStorage.removeItem('TEZTALIM_SESSION'); } catch (e) {}
+    $('auth-buttons').classList.remove('hidden'); $('user-badge').classList.add('hidden'); $('time-tracker-badge').classList.add('hidden');
+    toast("Tizimdan chiqdingiz.");
+}
+function formatSeconds(sec) {
+    sec = sec || 0;
+    return [Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), sec % 60].map(n => String(n).padStart(2, '0')).join(':');
+}
+window.addEventListener('beforeunload', saveData);
+
+/* ===== 5. OTA-ONA NAZORATI (endi parol bilan himoyalangan) ===== */
+function openParentModal() { $('modal-parent').classList.remove('hidden'); }
+function switchParentTab(tab) {
+    const lg = tab === 'login', on = "font-bold text-xs text-emerald-400 border-b-2 border-emerald-500 pb-1", off = "font-bold text-xs text-slate-400 hover:text-white pb-1";
+    $('form-parent-login').classList.toggle('hidden', !lg); $('form-parent-reg').classList.toggle('hidden', lg);
+    $('tab-parent-login-btn').className = lg ? on : off; $('tab-parent-reg-btn').className = lg ? off : on;
+}
+function handleParentRegister(e) {
+    e.preventDefault();
+    const parentName = $('parent-fullname').value.trim(), childEmail = $('parent-child-email').value.trim().toLowerCase(), pw = $('parent-pass').value;
+    if (!studentsData.some(s => s.email === childEmail)) return toast("Bunday Gmail bilan o'quvchi topilmadi! Farzandingiz avval ro'yxatdan o'tsin.", false);
+    if (pw.length < 6) return toast("Parol kamida 6 ta belgi bo'lsin!", false);
+    if (parentRequests.some(r => r.childEmail === childEmail)) return toast("Bu farzand uchun ariza allaqachon mavjud!", false);
+    parentRequests.push({ id: Date.now(), parentName, childEmail, pass: hashPw(childEmail, pw), status: "pending" });
+    saveData(); e.target.reset(); closeModal('modal-parent');
+    toast("Ariza adminga yuborildi. Tasdiqlangach kira olasiz.");
+}
+function handleParentLogin(e) {
+    e.preventDefault();
+    const childEmail = $('parent-login-child-email').value.trim().toLowerCase(), pw = $('parent-login-pass').value;
+    refreshFromStorage();
+    const req = parentRequests.find(r => r.childEmail === childEmail);
+    if (!req || req.pass !== hashPw(childEmail, pw)) return toast("Gmail yoki parol xato, yoki ariza topilmadi!", false);
+    if (req.status !== 'approved') return toast("Arizangiz admin tomonidan hali tasdiqlanmagan!", false);
+    const st = studentsData.find(s => s.email === childEmail);
+    if (!st) return toast("O'quvchi topilmadi!", false);
+    e.target.reset(); closeModal('modal-parent');
+    $('parent-dash-student-name').innerText = "O'quvchi: " + st.fullname + " (" + st.email + ")";
+    $('parent-dash-time').innerText = formatSeconds(st.time);
+    $('parent-dash-score').innerText = (st.score || 0) + " ball";
+    $('parent-dash-status').innerText = (st.score || 0) >= 80 ? "A'lo natija! Farzandingiz testlarni muvaffaqiyatli topshirmoqda." : (st.score || 0) > 0 ? "Farzandingiz o'qishda davom etmoqda. Ko'proq mashq qilish tavsiya etiladi." : "Farzandingiz hali test topshirmagan.";
+    $('modal-parent-dashboard').classList.remove('hidden');
+}
+
+/* ===== 6. ADMIN ===== */
+function openAdminAuthModal() { $('modal-admin-auth').classList.remove('hidden'); }
+function handleAdminLogin(e) {
+    e.preventDefault();
+    if (Date.now() < adminLockUntil) return toast("Ko'p urinish! " + Math.ceil((adminLockUntil - Date.now()) / 1000) + " soniya kuting.", false);
+    const l = $('admin-login-input').value.trim(), p = $('admin-pass-input').value.trim();
+    if (sha256(l + ':' + p) === ADMIN_HASH) {
+        adminFails = 0; e.target.reset(); closeModal('modal-admin-auth');
+        renderAdminDashboard(); $('modal-admin-dashboard').classList.remove('hidden');
+    } else {
+        if (++adminFails >= 5) { adminLockUntil = Date.now() + 30000; adminFails = 0; }
+        toast("Admin login yoki parol noto'g'ri!", false);
+    }
+}
+function renderAdminDashboard() {
+    refreshFromStorage();
+    $('admin-students-tbody').innerHTML = studentsData.map(s => `<tr><td class="p-3 font-semibold text-white">${esc(s.fullname)}</td><td class="p-3 text-slate-400">${esc(s.email)}</td><td class="p-3 font-mono text-cyan-400">${formatSeconds(s.time)}</td><td class="p-3"><button onclick="deleteStudent(${s.id})" class="px-2 py-1 bg-red-600/30 text-red-400 rounded hover:bg-red-600 hover:text-white transition">O'chirish</button></td></tr>`).join('');
+    $('admin-parents-tbody').innerHTML = parentRequests.map(p => `<tr><td class="p-3 font-semibold text-white">${esc(p.parentName)}</td><td class="p-3 text-slate-400">${esc(p.childEmail)}</td><td class="p-3">${p.status === 'approved' ? '<span class="text-emerald-400 font-bold">Tasdiqlangan</span>' : '<span class="text-amber-400 font-bold">Kutilmoqda</span>'}</td><td class="p-3 space-x-2">${p.status === 'pending' ? `<button onclick="approveParent(${p.id})" class="px-2 py-1 bg-emerald-600 text-white rounded">Tasdiqlash</button>` : ''}<button onclick="deleteParentReq(${p.id})" class="px-2 py-1 bg-red-600/30 text-red-400 rounded hover:bg-red-600 hover:text-white">O'chirish</button></td></tr>`).join('');
+    $('admin-news-list').innerHTML = newsItems.map(n => `<div class="flex justify-between items-center gap-2 p-2 bg-slate-950 rounded-lg border border-slate-800 text-xs"><span class="truncate"><b class="text-indigo-300">${esc(n.cat)}</b> — ${esc(n.title)}</span><button onclick="deleteNews(${n.id})" class="px-2 py-1 bg-red-600/30 text-red-400 rounded hover:bg-red-600 hover:text-white">O'chirish</button></div>`).join('');
+}
+function deleteStudent(id) {
+    if (!confirm("O'quvchi va uning ota-ona arizasi o'chirilsinmi?")) return;
+    const s = studentsData.find(x => x.id === id);
+    studentsData = studentsData.filter(x => x.id !== id);
+    if (s) parentRequests = parentRequests.filter(r => r.childEmail !== s.email);
+    if (currentUser && currentUser.id === id) logoutUser();
+    saveData(); renderAdminDashboard();
+}
+function approveParent(id) { const r = parentRequests.find(p => p.id === id); if (r) { r.status = 'approved'; saveData(); renderAdminDashboard(); } }
+function deleteParentReq(id) { if (!confirm("Ariza o'chirilsinmi?")) return; parentRequests = parentRequests.filter(p => p.id !== id); saveData(); renderAdminDashboard(); }
+function deleteNews(id) { if (!confirm("Yangilik o'chirilsinmi?")) return; newsItems = newsItems.filter(n => n.id !== id); saveData(); renderAdminDashboard(); }
+function broadcast(data) { try { localStorage.setItem('TEZTALIM_BROADCAST', JSON.stringify({ ...data, t: Date.now() })); } catch (e) {} }
+function triggerOnlineLessonBroadcast() {
+    broadcast({ type: 'lesson' });   // boshqa ochiq oynalarga (o'quvchilarga) yuboriladi
+    toast("Jonli dars e'loni yuborildi (shu brauzerdagi barcha oynalarga).");
+}
+function goToOnlineClassroomFromBroadcast() { closeModal('modal-online-lesson-alert'); showSection('online-darslar'); }
+function showBanner(tag, msg) { $('broadcast-tag').innerText = tag; $('broadcast-msg').innerText = msg; $('broadcast-alert').classList.remove('hidden'); }
+function publishNewsFromAdmin() {
+    const cat = $('admin-news-category').value, text = $('admin-news-text').value.trim();
+    const title = $('admin-news-title').value.trim() || (cat === 'KELAJAK MARKAZI' ? "Kelajak Markazi yangi e'loni" : "Platforma rasmiy yangiligi");
+    if (!text) return toast("E'lon matnini kiriting!", false);
+    newsItems.unshift({ id: Date.now(), cat, title, date: new Date().toISOString().split('T')[0], content: text });
+    saveData(); broadcast({ type: 'news', cat, msg: title });
+    $('admin-news-text').value = ''; $('admin-news-title').value = '';
+    showBanner(cat, title); renderAdminDashboard(); toast("Yangilik tarqatildi!");
+}
+window.addEventListener('storage', e => {   // boshqa oynalar bilan sinxronlash
+    if (e.key === 'TEZTALIM_BROADCAST' && e.newValue) {
+        const d = JSON.parse(e.newValue);
+        if (d.type === 'lesson') $('modal-online-lesson-alert').classList.remove('hidden');
+        else showBanner(d.cat, d.msg);
+    }
+    if (e.key && e.key.startsWith('TEZTALIM_') && e.key !== 'TEZTALIM_BROADCAST') refreshFromStorage();
+});
+
+/* ===== 7. FANLAR VA TEST ===== */
+const quizDatabase = {
+    'TARIX': [
+        { q: "Amir Temur nechanchi yilda tug'ilgan?", a: ["1336-yil", "1405-yil", "1370-yil", "1206-yil"], c: 0 },
+        { q: "O'zbekiston Respublikasi Mustaqilligi qachon e'lon qilingan?", a: ["1991-yil 1-sentyabr", "1990-yil 24-mart", "1992-yil 8-dekabr", "1989-yil 21-oktyabr"], c: 0 }
+    ],
+    'INGLIZ-TILI': [
+        { q: "Choose the correct sentence in Present Perfect:", a: ["I have lived here for 5 years.", "I live here for 5 years.", "I had lived here yesterday.", "I am living here ago."], c: 0 },
+        { q: "What is the synonym of 'Important'?", a: ["Crucial", "Tiny", "Weak", "Silly"], c: 0 }
+    ],
+    'ONA-TILI': [{ q: "O'zbek tiliga qachon davlat tili maqomi berilgan?", a: ["1989-yil 21-oktyabr", "1991-yil 1-sentyabr", "1992-yil 8-dekabr", "1993-yil 2-sentyabr"], c: 0 }],
+    'MATEMATIKA': [
+        { q: "25 ning kvadrati nechaga teng?", a: ["625", "500", "225", "650"], c: 0 },
+        { q: "Tenglamani yeching: 2x + 10 = 30", a: ["x = 10", "x = 15", "x = 20", "x = 5"], c: 0 }
+    ],
+    'HUQUQ': [{ q: "O'zbekiston Respublikasi Konstitutsiyasi qachon qabul qilingan?", a: ["1992-yil 8-dekabr", "1991-yil 1-sentyabr", "1993-yil 29-dekabr", "1990-yil 20-iyun"], c: 0 }]
+};
+let quiz = null;
+const shuffle = arr => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function selectSubject(name, mode) {
+    const box = $('subject-content-box'); box.classList.remove('hidden');
+    if (mode === 'darslik') {
+        box.innerHTML = `<h3 class="font-orbitron font-bold text-xl text-indigo-400">${esc(name)} — CHUQURLASHTIRILGAN DARSLIK</h3><p class="text-xs text-slate-300 leading-relaxed">Ushbu darslikda ${esc(name)} fanining poydevor tushunchalari, nazariy qoidalari hamda imtihonlarga tayyorgarlik uchun muhim manbalar jamlangan.</p><div class="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-2"><p>🔹 1-Mavzu: Fan asoslari va asosiy tushunchalar.</p><p>🔹 2-Mavzu: Amaliy topshiriqlar va tahlillar.</p><p>🔹 3-Mavzu: Imtihon savollari bilan ishlash.</p></div>`;
+    } else {
+        const items = quizDatabase[name] || [];
+        if (!items.length) { box.innerHTML = `<p class="text-xs text-slate-400">Bu fan bo'yicha tez kunda testlar joylanadi.</p>`; return; }
+        quiz = { name, items, opts: items.map(it => shuffle(it.a.map((t, i) => ({ t, ok: i === it.c })))), done: {}, right: 0 };   // variantlar aralashtiriladi
+        box.innerHTML = `<h3 class="font-orbitron font-bold text-xl text-indigo-400">${esc(name)} — INTERAKTIV TEST</h3>` +
+            (currentUser ? '' : `<p class="text-xs text-amber-400">⚠ Ball yig'ish uchun tizimga kiring.</p>`) +
+            items.map((it, qi) => `<div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-3"><p class="text-xs font-bold text-white">${qi + 1}. ${esc(it.q)}</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${quiz.opts[qi].map((o, oi) => `<button onclick="answer(${qi},${oi},this)" class="w-full text-left p-2.5 rounded-lg bg-slate-800 hover:bg-indigo-600/50 text-xs text-slate-300 transition">${esc(o.t)}</button>`).join('')}</div></div>`).join('');
+    }
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function answer(qi, oi, btn) {
+    if (!quiz || quiz.done[qi]) return;   // bir savolga bitta javob
+    quiz.done[qi] = 1;
+    [...btn.parentElement.children].forEach((b, i) => { b.disabled = true; if (quiz.opts[qi][i].ok) b.className = "w-full text-left p-2.5 rounded-lg bg-emerald-600 text-white text-xs font-bold"; });
+    if (quiz.opts[qi][oi].ok) {
+        quiz.right++;
+        if (currentUser) {
+            const key = quiz.name + '#' + quiz.items[qi].q; currentUser.answered = currentUser.answered || {};
+            if (!currentUser.answered[key]) { currentUser.answered[key] = 1; currentUser.score = (currentUser.score || 0) + 10; saveData(); }   // har savol uchun ball faqat 1 marta
+        }
+    } else btn.className = "w-full text-left p-2.5 rounded-lg bg-red-600 text-white text-xs font-bold";
+    if (Object.keys(quiz.done).length === quiz.items.length) toast(`Test yakunlandi: ${quiz.right}/${quiz.items.length} to'g'ri`);
+}
+
+/* ===== 8. AI MASLAHATCHI (kalit so'zlar bo'yicha) ===== */
+const PROFS = [
+    [['dasturchi','programmist','proger','it mutaxassis','informatik'], 'Dasturchi', 'Matematika, Ingliz-tili, Informatika va Mantiq'],
+    [['shifokor','vrach','doktor','tabib'], 'Shifokor', 'Biologiya, Kimyo va Ona-tili'],
+    [['huquqshunos','yurist','sudya','advokat','prokuror'], 'Huquqshunos', 'Huquq, Tarix va Ona-tili'],
+    [['oqituvchi','ustoz','pedagog'], "O'qituvchi", "o'zingiz o'qitadigan fan, Ona-tili va Psixologiya"],
+    [['muhandis','injener','arxitektor','quruvchi'], 'Muhandis', 'Matematika, Fizika va Chizmachilik'],
+    [['iqtisodchi','buxgalter','bankir','tadbirkor'], 'Iqtisodchi', 'Matematika, Iqtisodiyot va Ingliz-tili'],
+    [['jurnalist','yozuvchi','muharrir'], 'Jurnalist', 'Ona-tili, Adabiyot, Tarix va Ingliz-tili'],
+    [['diplomat','tarjimon'], 'Diplomat/Tarjimon', 'Ingliz-tili, Tarix va Huquq']
+];
+const SUBJ = [
+    [['matematika','algebra','geometriya'], 'Muhandis, Dasturchi, Iqtisodchi yoki Data Scientist'],
+    [['fizika'], 'Muhandis, Pilot yoki Energetik'],
+    [['kimyo','biologiya'], 'Shifokor, Farmatsevt yoki Biotexnolog'],
+    [['informatika','dasturlash'], 'Dasturchi, Kiberxavfsizlik mutaxassisi yoki Dizayner'],
+    [['ingliz'], 'Tarjimon, Diplomat yoki Xalqaro menejer'],
+    [['tarix','geografiya'], 'Diplomat, Tarixchi, Gid yoki Arxeolog'],
+    [['huquq'], 'Yurist, Notarius yoki Advokat'],
+    [['ona tili','adabiyot','ona tili'], 'Jurnalist, Muharrir yoki Yozuvchi']
+];
+function aiReply(type, text) {
+    const t = norm(text);
+    const hits = (type === 1 ? PROFS : SUBJ).filter(r => r[0].some(k => t.includes(k)));
+    if (type === 1) return hits.length ? hits.map(h => `<b>${h[1]}</b> kasbi uchun: ${h[2]} fanlarini chuqur o'rganing.`).join('<br>') : "Bu kasbni hali bilmayman. Sinab ko'ring: dasturchi, shifokor, huquqshunos, o'qituvchi, muhandis, iqtisodchi, jurnalist, diplomat.";
+    return hits.length ? "Siz tanlagan fanlarga mos kasblar: " + hits.map(h => h[1]).join('; ') + "." : "Bu fanni tanimadim. Sinab ko'ring: matematika, fizika, kimyo, biologiya, informatika, ingliz tili, tarix, huquq, ona tili.";
+}
+function processAIAdvisor(type) {
+    const input = $('ai-input-' + type), chat = $('ai-chat-' + type), text = input.value.trim();
+    if (!text) return;
+    chat.innerHTML += `<div class="p-3 rounded-xl bg-slate-800 text-xs text-white text-right font-medium">${esc(text)}</div>`;
+    input.value = ''; chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => {
+        chat.innerHTML += `<div class="p-3 rounded-xl bg-indigo-900/40 border border-indigo-500/30 text-xs text-indigo-200">🤖 <strong>AI Maslahatchi:</strong> ${aiReply(type, text)}</div>`;
+        chat.scrollTop = chat.scrollHeight;
+    }, 500);
+}
+
+/* ===== 9. ONLINE DARS CHATI ===== */
+function sendOnlineChatMessage(custom) {
+    const input = $('online-chat-input'), box = $('online-chat-box');
+    const text = typeof custom === 'string' ? custom : input.value.trim();
+    if (!text) return;
+    box.innerHTML += `<div class="bg-slate-900/80 p-2.5 rounded-lg border border-slate-800"><span class="font-bold text-cyan-400">${esc(currentUser ? currentUser.fullname : "O'quvchi")}:</span><p class="text-slate-200 mt-0.5">${esc(text)}</p></div>`;
+    if (typeof custom !== 'string') input.value = '';
+    box.scrollTop = box.scrollHeight;
+}
+
+/* ===== 10. YANGILIKLAR VA REYTING ===== */
+function renderNewsSection(cat) {
+    const list = newsItems.filter(n => n.cat === cat);
+    $('news-section-title').innerText = cat + " BO'LIMI";
+    $('news-container').innerHTML = list.length ? list.map(n => `<div class="glass-card p-6 rounded-2xl border border-slate-800 space-y-3"><div class="flex justify-between items-center text-[10px] text-slate-400"><span class="px-2.5 py-1 bg-indigo-500/20 text-indigo-300 font-bold rounded-full">${esc(n.cat)}</span><span>${esc(n.date)}</span></div><h3 class="font-bold text-base text-white">${esc(n.title)}</h3><p class="text-xs text-slate-300 leading-relaxed">${esc(n.content)}</p></div>`).join('') : `<p class="text-xs text-slate-400">Ushbu bo'limda hali e'lonlar yo'q.</p>`;
+}
+const maskEmail = e => e.replace(/^(.{2}).*(@.*)$/, '$1***$2');   // maxfiylik: Gmail yashiriladi
+function renderLeaderboard() {
+    refreshFromStorage();
+    const sorted = [...studentsData].sort((a, b) => (b.score || 0) - (a.score || 0) || (b.time || 0) - (a.time || 0));
+    $('leaderboard-tbody').innerHTML = sorted.map((s, i) => `<tr class="${i < 3 ? 'bg-amber-500/5' : ''}"><td class="p-4 font-bold text-amber-400">${['🥇','🥈','🥉'][i] || '#' + (i + 1)}</td><td class="p-4 font-semibold text-white">${esc(s.fullname)}</td><td class="p-4 text-slate-400">${esc(maskEmail(s.email))}</td><td class="p-4 font-mono text-cyan-400 font-bold">${formatSeconds(s.time)}</td><td class="p-4 font-bold text-emerald-400">${s.score || 0} ball</td></tr>`).join('');
+}
+
+/* ===== 11. ISHGA TUSHIRISH: qo'shimcha maydonlar, tugmalar, sessiya ===== */
+(function init() {
+    const pw = (id, ph) => `<div><label class="block text-xs font-medium text-slate-300 mb-1">Parol</label><input type="password" id="${id}" required placeholder="${ph}" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></div>`;
+    document.querySelector('#form-parent-login button[type=submit]').insertAdjacentHTML('beforebegin', pw('parent-login-pass', '••••••••'));
+    document.querySelector('#form-parent-reg button[type=submit]').insertAdjacentHTML('beforebegin', pw('parent-pass', 'Kamida 6 belgi'));
+    $('admin-news-text').insertAdjacentHTML('beforebegin', `<input id="admin-news-title" type="text" placeholder="Sarlavha (ixtiyoriy)" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none">`);
+    $('modal-admin-dashboard').querySelector('.space-y-6').insertAdjacentHTML('beforeend', `<div class="space-y-3"><h4 class="font-bold text-sm text-white">📰 E'lonlarni boshqarish</h4><div id="admin-news-list" class="space-y-2"></div></div>`);
+    [['ai-input-1', () => processAIAdvisor(1)], ['ai-input-2', () => processAIAdvisor(2)], ['online-chat-input', () => sendOnlineChatMessage()]]
+        .forEach(([id, fn]) => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') fn(); }));
+    // Online dars boshqaruv tugmalari endi ishlaydi
+    const [mic, cam, hand] = document.querySelectorAll('#sec-online-darslar button.p-2\\.5');
+    let micOn = false, camOn = true;
+    mic.onclick = () => { micOn = !micOn; mic.innerHTML = `<i class="fa-solid fa-microphone${micOn ? '' : '-slash'}"></i>`; mic.className = 'p-2.5 rounded-lg text-xs ' + (micOn ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'); };
+    cam.onclick = () => { camOn = !camOn; cam.innerHTML = `<i class="fa-solid fa-video${camOn ? '' : '-slash'}"></i>`; cam.className = 'p-2.5 rounded-lg text-xs ' + (camOn ? 'bg-slate-800 text-slate-300' : 'bg-red-500/20 text-red-400'); };
+    hand.onclick = () => { sendOnlineChatMessage("✋ qo'l ko'tardi"); toast("Qo'l ko'tarildi"); };
+    document.querySelectorAll('#sec-online-darslar .animate-bounce.w-1').forEach((el, i) => el.style.animationDelay = (i * 0.12) + 's');
+    // Sessiyani tiklash (sahifa yangilansa ham tizimda qoladi)
+    const sid = Number(localStorage.getItem('TEZTALIM_SESSION'));
+    const u = sid && studentsData.find(s => s.id === sid);
+    if (u) loginSuccess(u);
+    saveData();
+})();
+
+
+        /* -------------------------------------------------------------
+           10. LIVE ANIMATED PARTICLES CANVAS BACKGROUND
+        ------------------------------------------------------------- */
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+        const particleCount = 45;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.4,
+                dy: (Math.random() - 0.5) * 0.4,
+                color: `rgba(99, 102, 241, ${Math.random() * 0.4 + 0.1})`
+            });
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.x += p.dx;
+                p.y += p.dy;
+
+                if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+    </script>
+</body>
+</html>
